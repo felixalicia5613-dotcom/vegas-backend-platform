@@ -68,8 +68,7 @@ app.post('/api/admin/allocate-credits', (req, res) => {
     return res.json({ success: true, newBalance: database.players[cleanTarget].credits });
 });
 
-// Handle standard routing fallbacks
-app.all('/*splat', (req, res) => {
+app.get('/{*catchall}', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 

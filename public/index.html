@@ -3,134 +3,132 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VEGAS-X PLATFORM OPERATOR ENGINE</title>
+    <title>VEGAS-X GAME ROOM</title>
     <style>
-        body { margin: 0; background-color: #050814; color: white; font-family: system-ui, sans-serif; }
+        body { margin: 0; background-color: #030712; color: white; font-family: system-ui, sans-serif; }
         .wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
-        .card { background-color: #0b1329; border: 1px solid #1e293b; border-radius: 12px; padding: 32px; width: 100%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; }
+        .card { background-color: #0f172a; border: 1px solid #1e293b; border-radius: 12px; padding: 32px; width: 100%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; }
         .input-group { text-align: left; margin-bottom: 16px; }
         label { display: block; font-size: 13px; color: #94a3b8; margin-bottom: 6px; font-weight: bold; }
-        input { width: 91%; background-color: #111827; border: 1px solid #334155; border-radius: 6px; padding: 12px; color: white; font-size: 16px; }
+        input { width: 91%; background-color: #1f2937; border: 1px solid #374151; border-radius: 6px; padding: 12px; color: white; font-size: 16px; }
         button { width: 100%; background: linear-gradient(to right, #10b981, #7c3aed); color: white; border: none; padding: 12px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 12px; }
-        .dash-container { padding: 30px; max-width: 1000px; margin: 0 auto; }
-        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
+        .lobby-container { padding: 24px; max-width: 1200px; margin: 0 auto; }
+        .game-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px; margin-top: 20px; }
+        .game-card { background-color: #0f172a; border: 1px solid #1e293b; border-radius: 16px; padding: 16px; transition: transform 0.2s, border-color 0.2s; }
+        .game-card:hover { transform: translateY(-4px); border-color: #a855f7; }
+        .game-banner { height: 160px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 900; font-size: 22px; text-shadow: 0 2px 4px rgba(0,0,0,0.6); margin-bottom: 14px; color: white; }
     </style>
 </head>
 <body>
     <div id="app"></div>
 
     <script>
-        // Start out in the login panel component view
-        showLoginPanel();
+        // Track runtime game session parameter configurations
+        let sessionUser = null;
+        let sessionCredits = 0.00;
 
-        function showLoginPanel() {
+        showLoginGate();
+
+        function showLoginGate() {
             document.getElementById('app').innerHTML = `
                 <div class="wrapper">
                     <div class="card">
-                        <h2 style="margin-top:0; color:#10b981;">VEGAS CORE LOGIN</h2>
-                        <p style="color:#64748b; font-size:14px; margin-bottom:24px;">Enter Player Profile or Admin Token</p>
+                        <h2 style="margin-top:0; color:#a855f7; letter-spacing:1px;">VEGAS GAME PORTAL</h2>
+                        <p style="color:#64748b; font-size:14px; margin-bottom:24px;">Enter Player Terminal ID to Launch Lobby</p>
                         <div class="input-group">
-                            <label>ACCOUNT USERNAME</label>
-                            <input type="text" id="username" placeholder="Type account ID...">
+                            <label>PLAYER ACCOUNT ID</label>
+                            <input type="text" id="username" placeholder="Type username here...">
                         </div>
-                        <div class="input-group">
-                            <label>SECURITY PASSWORD</label>
-                            <input type="password" id="password" value="123456">
-                        </div>
-                        <button onclick="executeAuthentication()">SIGN IN TO SYSTEM</button>
+                        <button onclick="executeLoginHandshake()">LAUNCH ARENA</button>
                     </div>
                 </div>
             `;
         }
 
-        async function executeAuthentication() {
+        async function executeLoginHandshake() {
             const user = document.getElementById('username').value;
-            const pass = document.getElementById('password').value;
-
             const res = await fetch('/api/auth/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: user, password: pass })
+                body: JSON.stringify({ username: user, password: "123" })
             });
 
             const data = await res.json();
-            if (data.success) {
-                if (data.role === 'admin') { loadAdminSuite(data.username); }
-                else { loadPlayerSuite(data.player); }
+            if (data.success && data.role === 'player') {
+                sessionUser = data.player.username;
+                sessionCredits = data.player.credits;
+                loadGameArena();
+            } else if (data.success && data.role === 'admin') {
+                alert("This portal is only for players. Please manage accounts from your backend terminal console layout.");
             } else {
-                alert(data.message || "Authentication rejected.");
+                alert("Terminal credentials invalid or balance not initialized by admin.");
             }
         }
 
-        function loadPlayerSuite(player) {
+        function loadGameArena() {
             document.getElementById('app').innerHTML = `
-                <div class="dash-container">
+                <div class="lobby-container">
                     <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #1e293b; padding-bottom:16px; margin-bottom:24px;">
-                        <h2>LOBBY TERMINAL: <span style="color:#a855f7;">${player.username}</span></h2>
-                        <div style="background-color:#0f172a; border:1px solid #10b981; padding:10px 24px; border-radius:8px; text-align:right;">
-                            <p style="margin:0; font-size:10px; color:#10b981; font-weight:bold;">WALLET CREDITS</p>
-                            <p style="margin:0; font-size:24px; font-weight:900; font-family:monospace; color:#6ee7b7;">$${player.credits.toFixed(2)}</p>
+                        <div>
+                            <h1 style="margin:0; font-size:28px; font-weight:900; background:linear-gradient(to right, #34d399, #a78bfa); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">VEGAS ARENA LOBBY</h1>
+                            <p style="margin:4px 0 0 0; color:#64748b; font-size:12px; font-weight:bold;">TERMINAL CONNECTED: ${sessionUser.toUpperCase()}</p>
+                        </div>
+                        <div style="background-color:#0f172a; border:1px solid rgba(16,185,129,0.3); padding:8px 24px; border-radius:12px; text-align:right;">
+                            <p style="margin:0; font-size:10px; color:#34d399; font-weight:bold; tracking-spacing:0.5px;">AVAILABLE CREDITS</p>
+                            <p style="margin:0; font-size:26px; font-weight:900; font-family:monospace; color:#6ee7b7;" id="lobby_balance">$${sessionCredits.toFixed(2)}</p>
                         </div>
                     </div>
-                    <div class="grid-3">
-                        <div style="background-color:#0b1329; padding:20px; border-radius:12px; border:1px solid #1e293b;">
-                            <div style="height:140px; background:linear-gradient(135deg,#f59e0b,#b45309); border-radius:8px; display:flex; items:center; justify-content:center; font-weight:bold; font-size:20px;">BUFFALO REELS</div>
-                            <button onclick="alert('Spin complete!')" style="background-color:#10b981;">PLAY SLOT</button>
+
+                    <div class="game-grid">
+                        <div class="game-card">
+                            <div class="game-banner" style="background: linear-gradient(135deg, #f59e0b, #9a3412);">BUFFALO GOLD</div>
+                            <h3 style="margin:0; font-size:18px;">Wild West Multipliers</h3>
+                            <p style="color:#64748b; font-size:12px; margin:4px 0 12px 0;">Cost per spin: $1.00</p>
+                            <button onclick="triggerSimulationGame('Buffalo Gold', 1.00)">PLAY GAME</button>
+                        </div>
+
+                        <div class="game-card">
+                            <div class="game-banner" style="background: linear-gradient(135deg, #06b6d4, #1e40af);">OCEAN KING</div>
+                            <h3 style="margin:0; font-size:18px;">Fish Hunter Arcade</h3>
+                            <p style="color:#64748b; font-size:12px; margin:4px 0 12px 0;">Cost per laser shot: $0.50</p>
+                            <button onclick="triggerSimulationGame('Ocean King', 0.50)" style="background: linear-gradient(to right, #8b5cf6, #ec4899);">PLAY GAME</button>
                         </div>
                     </div>
                 </div>
             `;
         }
 
-        function loadAdminSuite(adminName) {
-            document.getElementById('app').innerHTML = `
-                <div class="dash-container">
-                    <div style="border-bottom:1px solid #334155; padding-bottom:16px; margin-bottom:24px;">
-                        <h2 style="color:#a855f7; margin:0;">SYSTEM MANAGEMENT OVERVIEW</h2>
-                        <p style="margin:4px 0 0 0; font-size:12px; color:#64748b;">Active Session Manager: ${adminName}</p>
-                    </div>
-                    <div class="grid-3">
-                        <!-- Module 1: Register Profiles -->
-                        <div style="background-color:#0b1329; padding:24px; border-radius:12px; border:1px solid #3b0764;">
-                            <h3 style="margin-top:0; color:#c084fc;">Create Player Profile</h3>
-                            <input type="text" id="new_player_name" placeholder="Desired account ID..." style="margin-bottom:12px; width:88%;">
-                            <input type="number" id="new_player_credits" placeholder="Opening credit amount..." style="margin-bottom:12px; width:88%;">
-                            <button onclick="submitNewPlayer()">PROVISION ACCOUNT</button>
-                        </div>
-                        <!-- Module 2: Load Wallets -->
-                        <div style="background-color:#0b1329; padding:24px; border-radius:12px; border:1px solid #3b0764;">
-                            <h3 style="margin-top:0; color:#c084fc;">Inject Wallet Credits</h3>
-                            <input type="text" id="inject_target" placeholder="Target user ID..." style="margin-bottom:12px; width:88%;">
-                            <input type="number" id="inject_amount" placeholder="Volume amount..." style="margin-bottom:12px; width:88%;">
-                            <button onclick="submitCreditInjection()" style="background:linear-gradient(to right, #ec4899, #7c3aed);">EXECUTE FUND VECTOR</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
+        // Live dynamic math engine loop linking credit balances directly to interaction triggers
+        function triggerSimulationGame(gameName, cost) {
+            if (sessionCredits < cost) {
+                alert("Insufficient wallet funds. Please request credit allocation from your system administrator console.");
+                return;
+            }
 
-        async function submitNewPlayer() {
-            const user = document.getElementById('new_player_name').value;
-            const creds = document.getElementById('new_player_credits').value;
-            const res = await fetch('/api/admin/create-player', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: user, initialCredits: creds })
-            });
-            const data = await res.json();
-            alert(data.success ? "Account created successfully!" : data.error);
-        }
+            // Deduct the configuration bet value
+            sessionCredits -= cost;
+            document.getElementById('lobby_balance').innerText = `$${sessionCredits.toFixed(2)}`;
 
-        async function submitCreditInjection() {
-            const user = document.getElementById('inject_target').value;
-            const amount = document.getElementById('inject_amount').value;
-            const res = await fetch('/api/admin/allocate-credits', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ targetPlayer: user, creditAmount: amount })
-            });
-            const data = await res.json();
-            alert(data.success ? "Credits successfully pushed to database profile!" : data.error);
+            // Process secure automated outcome loop variables
+            const rand = Math.random();
+            let winAmount = 0;
+            let message = "";
+
+            if (rand > 0.85) { // 15% Chance of Big Win
+                winAmount = cost * 10;
+                sessionCredits += winAmount;
+                message = `🎉 BIG WIN! The system hit a jackpot multiplier! You won $${winAmount.toFixed(2)} credits!`;
+            } else if (rand > 0.50) { // 35% Chance of Regular Win
+                winAmount = cost * 2;
+                sessionCredits += winAmount;
+                message = `💰 WIN! Nice spin sequence hit! You won $${winAmount.toFixed(2)} credits!`;
+            } else {
+                message = `❌ No match this round. Try again!`;
+            }
+
+            // Push final updated credit vector state straight back to the main layout monitor
+            document.getElementById('lobby_balance').innerText = `$${sessionCredits.toFixed(2)}`;
+            alert(`[${gameName} Studio Core]\n\nBet Deducted: -$${cost.toFixed(2)}\nOutcome Result: ${message}\n\nNew Sync Balance: $${sessionCredits.toFixed(2)}`);
         }
     </script>
 </body>
