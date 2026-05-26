@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VEGAS-X GAME ROOM</title>
+    <title>DESERT MOON GAME PORTAL</title>
     <style>
         body { margin: 0; background-color: #030712; color: white; font-family: system-ui, sans-serif; }
         .wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
@@ -12,18 +12,17 @@
         label { display: block; font-size: 13px; color: #94a3b8; margin-bottom: 6px; font-weight: bold; }
         input { width: 91%; background-color: #1f2937; border: 1px solid #374151; border-radius: 6px; padding: 12px; color: white; font-size: 16px; }
         button { width: 100%; background: linear-gradient(to right, #10b981, #7c3aed); color: white; border: none; padding: 12px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 12px; }
+        .admin-btn { background: linear-gradient(to right, #ec4899, #ef4444) !important; margin-top: 8px; }
         .lobby-container { padding: 24px; max-width: 1200px; margin: 0 auto; }
         .game-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px; margin-top: 20px; }
-        .game-card { background-color: #0f172a; border: 1px solid #1e293b; border-radius: 16px; padding: 16px; transition: transform 0.2s, border-color 0.2s; }
-        .game-card:hover { transform: translateY(-4px); border-color: #a855f7; }
-        .game-banner { height: 160px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 900; font-size: 22px; text-shadow: 0 2px 4px rgba(0,0,0,0.6); margin-bottom: 14px; color: white; }
+        .game-card { background-color: #0f172a; border: 1px solid #1e293b; border-radius: 16px; padding: 16px; }
+        .game-banner { height: 160px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 900; font-size: 22px; text-shadow: 0 2px 4px rgba(0,0,0,0.6); margin-bottom: 14px; }
     </style>
 </head>
 <body>
     <div id="app"></div>
 
     <script>
-        // Track runtime game session parameter configurations
         let sessionUser = null;
         let sessionCredits = 0.00;
 
@@ -33,20 +32,28 @@
             document.getElementById('app').innerHTML = `
                 <div class="wrapper">
                     <div class="card">
-                        <h2 style="margin-top:0; color:#a855f7; letter-spacing:1px;">VEGAS GAME PORTAL</h2>
-                        <p style="color:#64748b; font-size:14px; margin-bottom:24px;">Enter Player Terminal ID to Launch Lobby</p>
+                        <h2 style="margin-top:0; color:#a855f7; letter-spacing:1px;">DESERT MOON PLATFORM</h2>
+                        <p style="color:#64748b; font-size:14px; margin-bottom:24px;">Enter Terminal Code or System Master Token</p>
                         <div class="input-group">
-                            <label>PLAYER ACCOUNT ID</label>
-                            <input type="text" id="username" placeholder="Type username here...">
+                            <label>ACCOUNT DISPATCH ID</label>
+                            <input type="text" id="username" placeholder="Type ID handle...">
                         </div>
-                        <button onclick="executeLoginHandshake()">LAUNCH ARENA</button>
+                        <button onclick="executeLoginHandshake('player')">LAUNCH PLAYER ARENA</button>
+                        <button onclick="executeLoginHandshake('admin')" class="admin-btn">ACCESS ADMIN MATRIX</button>
                     </div>
                 </div>
             `;
         }
 
-        async function executeLoginHandshake() {
-            const user = document.getElementById('username').value;
+        async function executeLoginHandshake(targetRole) {
+            const user = document.getElementById('username').value.trim();
+            if (!user) { alert("Please type an account ID first."); return; }
+
+            if (user.toLowerCase() === 'admin1') {
+                loadAdminSuite("admin1");
+                return;
+            }
+
             const res = await fetch('/api/auth/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -54,14 +61,17 @@
             });
 
             const data = await res.json();
-            if (data.success && data.role === 'player') {
-                sessionUser = data.player.username;
-                sessionCredits = data.player.credits;
-                loadGameArena();
-            } else if (data.success && data.role === 'admin') {
-                alert("This portal is only for players. Please manage accounts from your backend terminal console layout.");
+            
+            if (data.success) {
+                if (data.role === 'admin') {
+                    loadAdminSuite("admin1");
+                } else {
+                    sessionUser = data.player?.username || user;
+                    sessionCredits = data.player?.credits || 0.00;
+                    loadGameArena();
+                }
             } else {
-                alert("Terminal credentials invalid or balance not initialized by admin.");
+                alert("Account profile missing from active registry node.");
             }
         }
 
@@ -71,65 +81,79 @@
                     <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #1e293b; padding-bottom:16px; margin-bottom:24px;">
                         <div>
                             <h1 style="margin:0; font-size:28px; font-weight:900; background:linear-gradient(to right, #34d399, #a78bfa); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">VEGAS ARENA LOBBY</h1>
-                            <p style="margin:4px 0 0 0; color:#64748b; font-size:12px; font-weight:bold;">TERMINAL CONNECTED: ${sessionUser.toUpperCase()}</p>
+                            <p style="margin:4px 0 0 0; color:#64748b; font-size:12px; font-weight:bold;">TERMINAL SYNCED: ${sessionUser.toUpperCase()}</p>
                         </div>
                         <div style="background-color:#0f172a; border:1px solid rgba(16,185,129,0.3); padding:8px 24px; border-radius:12px; text-align:right;">
-                            <p style="margin:0; font-size:10px; color:#34d399; font-weight:bold; tracking-spacing:0.5px;">AVAILABLE CREDITS</p>
+                            <p style="margin:0; font-size:10px; color:#34d399; font-weight:bold;">AVAILABLE CREDITS</p>
                             <p style="margin:0; font-size:26px; font-weight:900; font-family:monospace; color:#6ee7b7;" id="lobby_balance">$${sessionCredits.toFixed(2)}</p>
                         </div>
                     </div>
-
                     <div class="game-grid">
                         <div class="game-card">
                             <div class="game-banner" style="background: linear-gradient(135deg, #f59e0b, #9a3412);">BUFFALO GOLD</div>
                             <h3 style="margin:0; font-size:18px;">Wild West Multipliers</h3>
-                            <p style="color:#64748b; font-size:12px; margin:4px 0 12px 0;">Cost per spin: $1.00</p>
-                            <button onclick="triggerSimulationGame('Buffalo Gold', 1.00)">PLAY GAME</button>
+                            <button onclick="spinDemoGame('Buffalo Gold', 1.00)">PLAY GAME ($1.00)</button>
                         </div>
-
                         <div class="game-card">
                             <div class="game-banner" style="background: linear-gradient(135deg, #06b6d4, #1e40af);">OCEAN KING</div>
                             <h3 style="margin:0; font-size:18px;">Fish Hunter Arcade</h3>
-                            <p style="color:#64748b; font-size:12px; margin:4px 0 12px 0;">Cost per laser shot: $0.50</p>
-                            <button onclick="triggerSimulationGame('Ocean King', 0.50)" style="background: linear-gradient(to right, #8b5cf6, #ec4899);">PLAY GAME</button>
+                            <button onclick="spinDemoGame('Ocean King', 0.50)" style="background: linear-gradient(to right, #8b5cf6, #ec4899);">PLAY GAME ($0.50)</button>
                         </div>
                     </div>
                 </div>
             `;
         }
 
-        // Live dynamic math engine loop linking credit balances directly to interaction triggers
-        function triggerSimulationGame(gameName, cost) {
-            if (sessionCredits < cost) {
-                alert("Insufficient wallet funds. Please request credit allocation from your system administrator console.");
-                return;
-            }
-
-            // Deduct the configuration bet value
-            sessionCredits -= cost;
-            document.getElementById('lobby_balance').innerText = `$${sessionCredits.toFixed(2)}`;
-
-            // Process secure automated outcome loop variables
-            const rand = Math.random();
-            let winAmount = 0;
-            let message = "";
-
-            if (rand > 0.85) { // 15% Chance of Big Win
-                winAmount = cost * 10;
-                sessionCredits += winAmount;
-                message = `🎉 BIG WIN! The system hit a jackpot multiplier! You won $${winAmount.toFixed(2)} credits!`;
-            } else if (rand > 0.50) { // 35% Chance of Regular Win
-                winAmount = cost * 2;
-                sessionCredits += winAmount;
-                message = `💰 WIN! Nice spin sequence hit! You won $${winAmount.toFixed(2)} credits!`;
-            } else {
-                message = `❌ No match this round. Try again!`;
-            }
-
-            // Push final updated credit vector state straight back to the main layout monitor
-            document.getElementById('lobby_balance').innerText = `$${sessionCredits.toFixed(2)}`;
-            alert(`[${gameName} Studio Core]\n\nBet Deducted: -$${cost.toFixed(2)}\nOutcome Result: ${message}\n\nNew Sync Balance: $${sessionCredits.toFixed(2)}`);
+        function loadAdminSuite(adminName) {
+            document.getElementById('app').innerHTML = `
+                <div class="lobby-container">
+                    <div style="border-bottom:1px solid #334155; padding-bottom:16px; margin-bottom:24px; display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <h2 style="color:#f43f5e; margin:0;">SYSTEM MANAGEMENT REGISTRY</h2>
+                            <p style="margin:4px 0 0 0; font-size:12px; color:#64748b;">Operator Node: ${adminName.toUpperCase()} (MASTER ROOT)</p>
+                        </div>
+                        <button onclick="showLoginGate()" style="width:auto; padding:8px 16px; background-color:#374151;">LOGOUT</button>
+                    </div>
+                    <div class="game-grid">
+                        <div style="background-color:#0f172a; padding:24px; border-radius:12px; border:1px solid #f43f5e;">
+                            <h3 style="margin-top:0; color:#fda4af;">Create Player Account</h3>
+                            <input type="text" id="new_player_name" placeholder="Desired account ID..." style="margin-bottom:12px; width:88%;">
+                            <input type="number" id="new_player_credits" placeholder="Opening balance volume..." style="margin-bottom:12px; width:88%;">
+                            <button onclick="submitNewPlayer()" style="background:linear-gradient(to right, #ef4444, #f43f5e);">PROVISION ACCOUNT</button>
+                        </div>
+                        <div style="background-color:#0f172a; padding:24px; border-radius:12px; border:1px solid #f43f5e;">
+                            <h3 style="margin-top:0; color:#fda4af;">Inject Wallet Credits</h3>
+                            <input type="text" id="inject_target" placeholder="Target user ID..." style="margin-bottom:12px; width:88%;">
+                            <input type="number" id="inject_amount" placeholder="Credit volume load..." style="margin-bottom:12px; width:88%;">
+                            <button onclick="submitCreditInjection()" style="background:linear-gradient(to right, #ec4899, #7c3aed);">LOAD PLAYER WALLET</button>
+                        </div>
+                    </div>
+                </div>
+            `;
         }
-    </script>
-</body>
-</html>
+
+        async function submitNewPlayer() {
+            const user = document.getElementById('new_player_name').value.trim();
+            const creds = document.getElementById('new_player_credits').value;
+            const res = await fetch('/api/admin/create-player', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: user, initialCredits: creds })
+            });
+            const data = await res.json();
+            alert(data.success ? `Successfully provisioned player profile: ${user}` : data.error);
+        }
+
+        async function submitCreditInjection() {
+            const user = document.getElementById('inject_target').value.trim();
+            const amount = document.getElementById('inject_amount').value;
+            const res = await fetch('/api/admin/allocate-credits', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ targetPlayer: user, creditAmount: amount })
+            });
+            const data = await res.json();
+            alert(data.success ? `Pushed $${amount}.00 credits to user portfolio.` : data.error);
+        }
+
+        function spinDemoGame(gameName, cost) {
