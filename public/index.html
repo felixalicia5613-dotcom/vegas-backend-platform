@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VEGAS-X PLATFORM OPERATOR ENGINE</title>
+    <style>
+        body { margin: 0; background-color: #050814; color: white; font-family: system-ui, sans-serif; }
+        .wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+        .card { background-color: #0b1329; border: 1px solid #1e293b; border-radius: 12px; padding: 32px; width: 100%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; }
+        .input-group { text-align: left; margin-bottom: 16px; }
+        label { display: block; font-size: 13px; color: #94a3b8; margin-bottom: 6px; font-weight: bold; }
+        input { width: 91%; background-color: #111827; border: 1px solid #334155; border-radius: 6px; padding: 12px; color: white; font-size: 16px; }
+        button { width: 100%; background: linear-gradient(to right, #10b981, #7c3aed); color: white; border: none; padding: 12px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 12px; }
+        .dash-container { padding: 30px; max-width: 1000px; margin: 0 auto; }
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+
+    <script>
+        // Start out in the login panel component view
+        showLoginPanel();
+
+        function showLoginPanel() {
+            document.getElementById('app').innerHTML = `
+                <div class="wrapper">
+                    <div class="card">
+                        <h2 style="margin-top:0; color:#10b981;">VEGAS CORE LOGIN</h2>
+                        <p style="color:#64748b; font-size:14px; margin-bottom:24px;">Enter Player Profile or Admin Token</p>
+                        <div class="input-group">
+                            <label>ACCOUNT USERNAME</label>
+                            <input type="text" id="username" placeholder="Type account ID...">
+                        </div>
+                        <div class="input-group">
+                            <label>SECURITY PASSWORD</label>
+                            <input type="password" id="password" value="123456">
+                        </div>
+                        <button onclick="executeAuthentication()">SIGN IN TO SYSTEM</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function executeAuthentication() {
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+
+            const res = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: user, password: pass })
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                if (data.role === 'admin') { loadAdminSuite(data.username); }
+                else { loadPlayerSuite(data.player); }
+            } else {
+                alert(data.message || "Authentication rejected.");
+            }
+        }
+
+        function loadPlayerSuite(player) {
+            document.getElementById('app').innerHTML = `
+                <div class="dash-container">
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #1e293b; padding-bottom:16px; margin-bottom:24px;">
+                        <h2>LOBBY TERMINAL: <span style="color:#a855f7;">${player.username}</span></h2>
+                        <div style="background-color:#0f172a; border:1px solid #10b981; padding:10px 24px; border-radius:8px; text-align:right;">
+                            <p style="margin:0; font-size:10px; color:#10b981; font-weight:bold;">WALLET CREDITS</p>
+                            <p style="margin:0; font-size:24px; font-weight:900; font-family:monospace; color:#6ee7b7;">$${player.credits.toFixed(2)}</p>
+                        </div>
+                    </div>
+                    <div class="grid-3">
+                        <div style="background-color:#0b1329; padding:20px; border-radius:12px; border:1px solid #1e293b;">
+                            <div style="height:140px; background:linear-gradient(135deg,#f59e0b,#b45309); border-radius:8px; display:flex; items:center; justify-content:center; font-weight:bold; font-size:20px;">BUFFALO REELS</div>
+                            <button onclick="alert('Spin complete!')" style="background-color:#10b981;">PLAY SLOT</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function loadAdminSuite(adminName) {
+            document.getElementById('app').innerHTML = `
+                <div class="dash-container">
+                    <div style="border-bottom:1px solid #334155; padding-bottom:16px; margin-bottom:24px;">
+                        <h2 style="color:#a855f7; margin:0;">SYSTEM MANAGEMENT OVERVIEW</h2>
+                        <p style="margin:4px 0 0 0; font-size:12px; color:#64748b;">Active Session Manager: ${adminName}</p>
+                    </div>
+                    <div class="grid-3">
+                        <!-- Module 1: Register Profiles -->
+                        <div style="background-color:#0b1329; padding:24px; border-radius:12px; border:1px solid #3b0764;">
+                            <h3 style="margin-top:0; color:#c084fc;">Create Player Profile</h3>
+                            <input type="text" id="new_player_name" placeholder="Desired account ID..." style="margin-bottom:12px; width:88%;">
+                            <input type="number" id="new_player_credits" placeholder="Opening credit amount..." style="margin-bottom:12px; width:88%;">
+                            <button onclick="submitNewPlayer()">PROVISION ACCOUNT</button>
+                        </div>
+                        <!-- Module 2: Load Wallets -->
+                        <div style="background-color:#0b1329; padding:24px; border-radius:12px; border:1px solid #3b0764;">
+                            <h3 style="margin-top:0; color:#c084fc;">Inject Wallet Credits</h3>
+                            <input type="text" id="inject_target" placeholder="Target user ID..." style="margin-bottom:12px; width:88%;">
+                            <input type="number" id="inject_amount" placeholder="Volume amount..." style="margin-bottom:12px; width:88%;">
+                            <button onclick="submitCreditInjection()" style="background:linear-gradient(to right, #ec4899, #7c3aed);">EXECUTE FUND VECTOR</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function submitNewPlayer() {
+            const user = document.getElementById('new_player_name').value;
+            const creds = document.getElementById('new_player_credits').value;
+            const res = await fetch('/api/admin/create-player', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: user, initialCredits: creds })
+            });
+            const data = await res.json();
+            alert(data.success ? "Account created successfully!" : data.error);
+        }
+
+        async function submitCreditInjection() {
+            const user = document.getElementById('inject_target').value;
+            const amount = document.getElementById('inject_amount').value;
+            const res = await fetch('/api/admin/allocate-credits', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ targetPlayer: user, creditAmount: amount })
+            });
+            const data = await res.json();
+            alert(data.success ? "Credits successfully pushed to database profile!" : data.error);
+        }
+    </script>
+</body>
+</html>
