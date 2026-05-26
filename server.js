@@ -69,7 +69,7 @@ app.post('/api/admin/allocate-credits', (req, res) => {
 });
 
 // Handle standard routing fallbacks
-app.get('*catchall', (req, res) => {
+app.all('/*splat', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
